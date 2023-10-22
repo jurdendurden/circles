@@ -1,5 +1,5 @@
 class Player:
-    def __init__(self, x, y, size, direction, speed, alignment, gold):
+    def __init__(self, x, y, size, direction, speed, alignment, gold, img):
         self.x = x	
         self.y = y
         self.size = size
@@ -9,6 +9,8 @@ class Player:
         self.gold = gold
         self.shield_one = 0
         self.shield_two = 0
+        self.score = 0
+        self.img = ""
 							
     def change_x(self, new_x):
         self.x = new_x
@@ -18,6 +20,9 @@ class Player:
         
     def change_size(self, new_size):
         self.size = new_size
+
+    def change_size(self, new_score):
+        self.score = new_score
         
     def change_direction(self, new_direction):
         self.direction = new_direction

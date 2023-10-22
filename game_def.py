@@ -12,4 +12,4 @@ class Game:
         
     def change_high_score(self, new_high_score):
         self.high_score = new_high_score
-                
+                    

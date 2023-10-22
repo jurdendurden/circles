@@ -1,11 +1,23 @@
 import pygame
+from pygame.locals import *
 import game_def
 import circle_def
 import random
 import math
 import sys
+import os
 
 CURRENT_LEVEL = 1
+
+class Background(pygame.sprite.Sprite):    
+
+    def __init__(self, image_file, location):
+        pygame.sprite.Sprite.__init__(self)  #call Sprite initializer
+        
+        self.image = pygame.image.load(image_file)
+        self.rect = self.image.get_rect()
+        self.rect.left, self.rect.top = location
+
 
 def get_high_score():
     # Default high score
@@ -64,38 +76,38 @@ def text_objects(text, font, color):
 
 def show_score():
     
-    coin_string = "Coin:  " + str(PLAYER.gold)		
-    tSurface, tRect = text_objects(coin_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
-    tRect.center = (700, 440)
+    coin_string = "Money:  " + str(PLAYER.gold)		
+    tSurface, tRect = text_objects(coin_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
+    tRect.center = (700, 430)
     win.blit(tSurface, tRect)
     
     speed_string = "Speed: " + str(PLAYER.speed)		
-    tSurface, tRect = text_objects(speed_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
-    tRect.center = (700, 480)
+    tSurface, tRect = text_objects(speed_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
+    tRect.center = (700, 460)
     win.blit(tSurface, tRect)
     
     hscore_string = "High:  " + str(GAME.high_score)		
-    tSurface, tRect = text_objects(hscore_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
-    tRect.center = (700, 520)
+    tSurface, tRect = text_objects(hscore_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
+    tRect.center = (700, 490)
     win.blit(tSurface, tRect)
     
-    score_string = "Score: " + str(PLAYER.size)		
-    tSurface, tRect = text_objects(score_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
-    tRect.center = (700, 560)
+    score_string = "Score: " + str(PLAYER.score)		
+    tSurface, tRect = text_objects(score_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
+    tRect.center = (700, 520)
     win.blit(tSurface, tRect)
     pygame.display.update()
     
 def show_level():
     level_string = "Level: " + str(GAME.level)
-    tSurface, tRect = text_objects(level_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
+    tSurface, tRect = text_objects(level_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
     tRect.center = (700, 400)
     win.blit(tSurface, tRect)
     pygame.display.update()
 
 def show_pause():    
     pause_string = "PAUSED"
-    tSurface, tRect = text_objects(pause_string, pygame.font.SysFont('Comic Sans MS', 24, bold=True), L_GREY)		
-    tRect.center = (400, 300)
+    tSurface, tRect = text_objects(pause_string, pygame.font.SysFont('Courier New', 60, bold=True), L_GREY)		
+    tRect.center = (display_width * 2 / 3, display_height * 2 / 3)
     win.blit(tSurface, tRect)
     pygame.display.update()
 
@@ -201,13 +213,12 @@ def check_collision():
         if distance(PLAYER.x, PLAYER.y, CIRCLES[i].x, CIRCLES[i].y) < PLAYER.size + CIRCLES[i].size:
             if CIRCLES[i].alignment == GOOD:
                 PLAYER.size += CIRCLES[i].size
-                grow_effect.play()
-                if PLAYER.size > GAME.high_score:
-                    GAME.high_score = PLAYER.size
-                    save_high_score(PLAYER.size)
+                PLAYER.score += CIRCLES[i].size
+                grow_effect.play()               
                 CIRCLES.pop(i)
             elif CIRCLES[i].alignment == SPD_BOOST:
                 PLAYER.speed += 1
+                PLAYER.score += 5
                 CIRCLES.pop(i)
                 speed_effect.play()
             elif CIRCLES[i].alignment == COIN:
@@ -217,13 +228,20 @@ def check_collision():
             elif CIRCLES[i].alignment == SHIELD_ONE:
                 PLAYER.shield_one += CIRCLES[i].size
                 CIRCLES.pop(i)
+                PLAYER.score += 10
                 shield_one_effect.play()
             elif CIRCLES[i].alignment == SHIELD_TWO:
                 PLAYER.shield_two += CIRCLES[i].size
-                if PLAYER.shield_two > 4:
-                    PLAYER.shield_two = 4
+                if PLAYER.shield_two >= 4:
+                    PLAYER.shield_two = 4                    
+                    PLAYER.score += 50
                 CIRCLES.pop(i)
+                PLAYER.score += 10
                 shield_two_effect.play()
+            elif CIRCLES[i].alignment == NUKE:
+                CIRCLES.pop(i)                    
+                nuke_effect.play()
+                nuke_bad()
             elif CIRCLES[i].alignment == BAD:
                 if (PLAYER.shield_one > 0):
                     PLAYER.shield_one -= 1
@@ -231,45 +249,44 @@ def check_collision():
                     PLAYER.shield_two -= 1
                 else:
                     PLAYER.size -= CIRCLES[i].size
+                    PLAYER.score -= CIRCLES[i].size
                 shrink_effect.play()
                 CIRCLES.pop(i)
                 if PLAYER.size < 1:
                     print("You died!")
                     pygame.quit()
                     quit()
-        
-        for obj2 in CIRCLES:
-            try:
-                if distance(CIRCLES[i].x, CIRCLES[i].y, CIRCLES[x].x, CIRCLES[x].y) < CIRCLES[i].size + CIRCLES[x].size:                
-                    if CIRCLES[i].alignment == BAD and CIRCLES[x].alignment == BAD and i != x:
-                        CIRCLES[i].size += CIRCLES[x].size 
-                        if CIRCLES[i].size > CIRCLES[x].size:
-                            del CIRCLES[x]   
-                        elif CIRCLES[x].size >= CIRCLES[i].size:
-                            del CIRCLES[i]  
-                
-            except:
-                print ("Error, out of range in CIRCLES array "+ str(i) + " " + str(x))                    
         x += 1
         i += 1
                 
         
         
         
-        
+def nuke_bad():
+    j = 0;
+    
+    for obj in CIRCLES:
+        if CIRCLES[j].alignment == BAD:
+            CIRCLES.pop(j)
+            PLAYER.score += 50
+        j += 1
 
 def new_circle(): 
     circle_type = random.randint(1,100)
     
-    if circle_type < 35:
-        CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), GAME.level * random.randint(2,15), random.randint(1,8), GAME.level * random.randint(2,7), 1, 0))
+    if circle_type < 60: #bad
+        CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), GAME.level * random.randint(2,15), random.randint(1,8), GAME.level * random.randint(2,7), BAD, 0, ""))
     else:
-        type = random.randint(1,7)
+        type = random.randint(2,8)
         
-        if (type > 5): #shield one
-            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), type, 0))
+        if (type > 5 and type < 8): #shield one
+            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
+        elif (type == 8):
+            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
+        elif (type == SPD_BOOST):
+            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), SPD_BOOST, 0, "speed_up.png"))
         else:
-            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), GAME.level * random.randint(2,15), random.randint(1,8), GAME.level * random.randint(2,7), type, 0))
+            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), GAME.level * random.randint(2,15), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
         
     
 
@@ -281,42 +298,49 @@ def draw_other_circles():
         elif CIRCLES[i].alignment == GOOD:
             pygame.draw.circle(win, GREEN, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == SPD_BOOST:
-            pygame.draw.circle(win, WHITE, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
+            #win.blit(spd_img, (CIRCLES[i].x,CIRCLES[i].y))
+            pygame.draw.circle(win, CYAN, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == COIN:
             pygame.draw.circle(win, YELLOW, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == SHIELD_ONE:
             pygame.draw.circle(win, MAGENTA, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == SHIELD_TWO:
             pygame.draw.circle(win, L_YELLOW, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
+        elif CIRCLES[i].alignment == NUKE:
+            pygame.draw.circle(win, D_ORANGE, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         i += 1
     
     
     
-def main_loop():
+def main_loop():    
+    
     time = 0
     level_time = 0    
-    music_paused = True
-    pygame.mixer.music.pause()
-    PAUSED = False
+    music_paused = False
+    #pygame.mixer.music.pause()    
     high_score = get_high_score()
-	  
-    while GAME.state == PLAYING:
-        
+	    
+    while GAME.state == PLAYING:                    
+        event = pygame.event.poll()    
         pygame.time.delay(100)
-		
-        event = pygame.event.poll()
+
         if event.type == pygame.QUIT:
             pygame.quit()
-            quit()						
-				
+            quit()	
+
+        if PLAYER.score > GAME.high_score:
+            GAME.high_score = PLAYER.score
+            save_high_score(PLAYER.score)
+            new_high_score.play()
+
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_KP4]:
+        if keys[pygame.K_KP4] or keys[pygame.K_LEFT]:
             PLAYER.direction = WEST            
-        if keys[pygame.K_KP6]:
+        if keys[pygame.K_KP6] or keys[pygame.K_RIGHT]:
             PLAYER.direction = EAST
-        if keys[pygame.K_KP8]:
+        if keys[pygame.K_KP8] or keys[pygame.K_UP]:        
             PLAYER.direction = NORTH
-        if keys[pygame.K_KP2]:
+        if keys[pygame.K_KP2] or keys[pygame.K_DOWN]:
             PLAYER.direction = SOUTH
         if keys[pygame.K_KP9]:
             PLAYER.direction = NE
@@ -327,17 +351,13 @@ def main_loop():
         if keys[pygame.K_KP1]:
             PLAYER.direction = SW
             
-        if keys[pygame.K_p]:
-            if PAUSED == False:
+        if keys[pygame.K_p] or keys[pygame.K_SPACE]:
+            if GAME.state != PAUSED:
                 pygame.mixer.music.pause()
                 music_paused = True
-                PAUSED = True
-                show_pause() 
-                continue
-            else:
-                PAUSED = False
-                pygame.mixer.music.unpause()
-                music_paused = False
+                GAME.state = PAUSED
+                show_pause()  
+                break
         if keys[pygame.K_m]:
             if music_paused == False:
                 pygame.mixer.music.pause()
@@ -351,15 +371,12 @@ def main_loop():
             PLAYER.x = 10
             PLAYER.y = 10
             CIRCLES = []
-            a = 10
+            a = 12
             while a > 0:
                 new_circle()
-                a -= 1
+                a -= 1        
         
-        if PAUSED == True:
-            continue
-        
-        win.fill(BLACK) #clear screen.
+        win.fill(BLACK) #clear screen.        
         move_circles()
         draw_player(PLAYER.x, PLAYER.y)
         draw_other_circles()                
@@ -370,19 +387,43 @@ def main_loop():
         if level_time > (LEVEL_TIMER * 10):
             level_time = 0
             GAME.level += 1
-            print ("Level up!")
+            print ("Level up! (" + str(GAME.level) + ")")
         
         if time > (TIMER * 10):
-            time = 0
+            time = 0            
             new_circle()
        
-            #print("Circles! memory usage: " + str(sys.getsizeof(CIRCLES)) + " bytes")
+            if (random.randint(1,100) < 15):
+                new_circle()
+
+            if (random.randint(1,100) < 25 and GAME.level >= 5):
+                new_circle()                
+
+            if (random.randint(1,100) < 50 and GAME.level >= 10):
+                new_circle()               
             
         check_collision()        
         show_score()
         show_level()
-        pygame.display.update()        
-        
+        pygame.display.update()      
+    
+    while GAME.state == PAUSED:
+        event = pygame.event.poll()    
+        pygame.time.delay(100)
+
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()	
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_p] or keys[pygame.K_SPACE]:
+            if GAME.state == PAUSED:
+                pygame.mixer.music.unpause()
+                music_paused = False
+                GAME.state = PLAYING            
+                break
+    while GAME.state == SHOP:
+        keys = pygame.key.get_pressed()    
     
     
 #colors
@@ -398,6 +439,7 @@ YELLOW = (255, 204, 0)
 GREEN = (0, 255, 0)
 MAGENTA = (203, 52, 153) #first shield
 L_YELLOW = (255, 255, 153) #second shield
+CYAN = (102, 255, 255)
 
 #circle types
 BAD = 1
@@ -407,6 +449,7 @@ SPD_BOOST = 4
 COIN = 5
 SHIELD_ONE = 6
 SHIELD_TWO = 7
+NUKE = 8
 
 #directions
 NORTH = 1
@@ -428,42 +471,57 @@ LEVEL_TIMER = 45
 PLAYING = 0
 PAUSED = 1
 START_SCREEN = 2
+SHOP = 3
+QUIT = 4
 
 
-#display variables
-display_width = 800
-display_height = 600
 
-pygame.mixer.pre_init(44100, 16, 2, 4096) #frequency, size, channels, buffersize
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 pygame.init()
 
+pygame.mixer.pre_init(44100, 16, 2, 4096) #frequency, size, channels, buffersize
+
 pygame.mixer.init()
 
-pygame.mixer.music.load('background.mp3')
+pygame.mixer.music.load('soulstorming-space-virus.mp3')
+pygame.mixer.music.set_volume(0.5)
 
-#pygame.mixer.music.play(-1)
+#display icons
+spd_img = pygame.image.load('speed_up.png')
+
+pygame.mixer.music.play(-1)
 
 #initialize main window and do layout
-win = pygame.display.set_mode((display_width, display_height))
+info = pygame.display.Info() # You have to call this before pygame.display.set_mode()
+screen_width, screen_height = info.current_w,info.current_h
+
+win = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+
+display_width = screen_width
+display_height = screen_height
+
 win.fill(BLACK)
 pygame.display.set_caption("Circles!")
+#bg = pygame.image.load("nebula.png")
 
 speed_effect = pygame.mixer.Sound("speed_up.wav")
 shrink_effect = pygame.mixer.Sound("shrink.wav")
 grow_effect = pygame.mixer.Sound("grow.wav")
 level_effect = pygame.mixer.Sound("level.wav")
-coin_effect = pygame.mixer.Sound("coin.wav")
+coin_effect = pygame.mixer.Sound("money.mp3")
 shield_one_effect = pygame.mixer.Sound("shield_one.wav")
 shield_two_effect = pygame.mixer.Sound("shield_two.wav")
+nuke_effect = pygame.mixer.Sound("nuke.mp3")
+new_high_score = pygame.mixer.Sound("new_high_score.mp3")
 
 
 GAME = game_def.Game(1,PLAYING,0)
-PLAYER = circle_def.Player(10, 10, 10, SOUTH, 5, PLYR, 0)
+PLAYER = circle_def.Player(10, 10, 10, SOUTH, 5, PLYR, 0, "")
 
 CIRCLES = []
 
-a = 10
+a = 12
 while a > 0:
     new_circle()
     a -= 1
