@@ -9,9 +9,7 @@ import os
 import game_def
 import circle_def
 
-
-#Constants
-CURRENT_LEVEL = 1
+####    Constants    ####
 
 #colors
 BLACK = (0,0,0)
@@ -49,10 +47,10 @@ SE = 7
 SW = 8
 
 #circle timer, sets time in seconds in between new enemies
-TIMER = 2
+TIMER = 1
 
 #level timer
-LEVEL_TIMER = 45
+LEVEL_TIMER = 30
 
 #game states
 PLAYING = 0
@@ -60,16 +58,6 @@ PAUSED = 1
 START_SCREEN = 2
 SHOP = 3
 QUIT = 4
-
-
-class Background(pygame.sprite.Sprite):    
-
-    def __init__(self, image_file, location):
-        pygame.sprite.Sprite.__init__(self)  #call Sprite initializer
-        
-        self.image = pygame.image.load(image_file)
-        self.rect = self.image.get_rect()
-        self.rect.left, self.rect.top = location
 
 
 def get_high_score():
@@ -131,29 +119,30 @@ def show_score():
     
     coin_string = "Money:  " + str(PLAYER.gold)		
     tSurface, tRect = text_objects(coin_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
-    tRect.center = (700, 430)
+    tRect.center = (50, 20)
     win.blit(tSurface, tRect)
     
-    speed_string = "Speed: " + str(PLAYER.speed)		
+    speed_string = " Speed: " + str(PLAYER.speed)		
     tSurface, tRect = text_objects(speed_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
-    tRect.center = (700, 460)
+    tRect.center = (200, 20)
     win.blit(tSurface, tRect)
-    
-    hscore_string = "High:  " + str(GAME.high_score)		
-    tSurface, tRect = text_objects(hscore_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
-    tRect.center = (700, 490)
-    win.blit(tSurface, tRect)
-    
-    score_string = "Score: " + str(PLAYER.score)		
+
+    score_string = " Score: " + str(PLAYER.score)		
     tSurface, tRect = text_objects(score_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
-    tRect.center = (700, 520)
+    tRect.center = (350, 20)
     win.blit(tSurface, tRect)
     pygame.display.update()
+  
+    hscore_string = "   High:  " + str(GAME.high_score)		
+    tSurface, tRect = text_objects(hscore_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
+    tRect.center = (500, 20)
+    win.blit(tSurface, tRect)
+    
     
 def show_level():
-    level_string = "Level: " + str(GAME.level)
+    level_string = " Level: " + str(GAME.level)
     tSurface, tRect = text_objects(level_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
-    tRect.center = (700, 400)
+    tRect.center = (700, 20)
     win.blit(tSurface, tRect)
     pygame.display.update()
 
@@ -297,7 +286,7 @@ def check_collision():
                 nuke_bad()
             elif CIRCLES[i].alignment == BAD:
                 if (PLAYER.shield_one > 0):
-                    PLAYER.shield_one -= 1
+                    PLAYER.shield_one -= int(CIRCLES[i].size / 3)
                 elif (PLAYER.shield_two > 0):
                     PLAYER.shield_two -= 1
                 else:
@@ -404,6 +393,10 @@ def main_loop():
         if keys[pygame.K_KP1]:
             PLAYER.direction = SW
             
+        if keys[pygame.K_q]:
+            pygame.quit()
+            quit()
+
         if keys[pygame.K_p] or keys[pygame.K_SPACE]:
             if GAME.state != PAUSED:
                 pygame.mixer.music.pause()
@@ -459,8 +452,8 @@ def main_loop():
         check_collision()        
         show_score()
         show_level()
-        pygame.display.update()      
-    
+        pygame.display.update()          
+        
     while GAME.state == PAUSED:
         event = pygame.event.poll()    
         pygame.time.delay(50)
@@ -480,11 +473,6 @@ def main_loop():
         keys = pygame.key.get_pressed()    
     
 
-
-
-
-
-
 #pre init stuff
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
@@ -495,10 +483,12 @@ pygame.mixer.pre_init(44100, 16, 2, 4096) #frequency, size, channels, buffersize
 
 pygame.mixer.init()
 
-pygame.mixer.music.load('resources/audio/music/soulstorming-space-virus.mp3')
+pygame.mixer.music.load('resources/audio/music/keys-of-moon-time-and-space.mp3')
 pygame.mixer.music.set_volume(0.5)
-
-pygame.mixer.music.play(-1)
+pygame.mixer.music.play(1)
+pygame.mixer.music.queue('resources/audio/music/soulstorming-space-virus.mp3')
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.play(1)
 
 #initialize main window and do layout
 info = pygame.display.Info() # You have to call this before pygame.display.set_mode()
@@ -509,7 +499,6 @@ win = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 display_width = screen_width
 display_height = screen_height
 
-win.fill(BLACK)
 pygame.display.set_caption("Circles!")
 
 
@@ -523,7 +512,6 @@ shield_one_effect = pygame.mixer.Sound("resources/audio/effects/shield_one.wav")
 shield_two_effect = pygame.mixer.Sound("resources/audio/effects/shield_two.wav")
 nuke_effect = pygame.mixer.Sound("resources/audio/effects/nuke.mp3")
 new_high_score = pygame.mixer.Sound("resources/audio/effects/new_high_score.mp3")
-
 
 #initialize game and player
 GAME = game_def.Game(1,PLAYING,0)
