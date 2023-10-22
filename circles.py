@@ -1,13 +1,66 @@
 import pygame
 from pygame.locals import *
-import game_def
-import circle_def
 import random
 import math
 import sys
 import os
 
+#game libs
+import game_def
+import circle_def
+
+
+#Constants
 CURRENT_LEVEL = 1
+
+#colors
+BLACK = (0,0,0)
+RED = (255, 0, 0)
+WHITE = (255,255,255)
+BLUE = (0,0,255)
+L_ORANGE = (255, 153, 51)
+L_GREY = (191, 191, 191)
+D_ORANGE = (204, 82, 0)
+D_GREY = (38, 38, 38)
+YELLOW = (255, 204, 0)
+GREEN = (0, 255, 0)
+MAGENTA = (203, 52, 153) #first shield
+L_YELLOW = (255, 255, 153) #second shield
+CYAN = (102, 255, 255)
+
+#circle types
+BAD = 1
+PLYR = 2
+GOOD = 3
+SPD_BOOST = 4
+COIN = 5
+SHIELD_ONE = 6
+SHIELD_TWO = 7
+NUKE = 8
+
+#directions
+NORTH = 1
+SOUTH = 2
+EAST = 3
+WEST = 4
+NE = 5
+NW = 6
+SE = 7
+SW = 8
+
+#circle timer, sets time in seconds in between new enemies
+TIMER = 2
+
+#level timer
+LEVEL_TIMER = 45
+
+#game states
+PLAYING = 0
+PAUSED = 1
+START_SCREEN = 2
+SHOP = 3
+QUIT = 4
+
 
 class Background(pygame.sprite.Sprite):    
 
@@ -218,7 +271,7 @@ def check_collision():
                 CIRCLES.pop(i)
             elif CIRCLES[i].alignment == SPD_BOOST:
                 PLAYER.speed += 1
-                PLAYER.score += 5
+                PLAYER.score += 25
                 CIRCLES.pop(i)
                 speed_effect.play()
             elif CIRCLES[i].alignment == COIN:
@@ -322,7 +375,7 @@ def main_loop():
 	    
     while GAME.state == PLAYING:                    
         event = pygame.event.poll()    
-        pygame.time.delay(100)
+        pygame.time.delay(50)
 
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -371,7 +424,7 @@ def main_loop():
             PLAYER.x = 10
             PLAYER.y = 10
             CIRCLES = []
-            a = 12
+            a = 15
             while a > 0:
                 new_circle()
                 a -= 1        
@@ -384,9 +437,10 @@ def main_loop():
         time += 1        
         level_time += 1
         
-        if level_time > (LEVEL_TIMER * 10):
+        if level_time > (LEVEL_TIMER * 20):
             level_time = 0
             GAME.level += 1
+            PLAYER.score += 100 * GAME.level
             print ("Level up! (" + str(GAME.level) + ")")
         
         if time > (TIMER * 10):
@@ -409,7 +463,7 @@ def main_loop():
     
     while GAME.state == PAUSED:
         event = pygame.event.poll()    
-        pygame.time.delay(100)
+        pygame.time.delay(50)
 
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -425,70 +479,24 @@ def main_loop():
     while GAME.state == SHOP:
         keys = pygame.key.get_pressed()    
     
-    
-#colors
-BLACK = (0,0,0)
-RED = (255, 0, 0)
-WHITE = (255,255,255)
-BLUE = (0,0,255)
-L_ORANGE = (255, 153, 51)
-L_GREY = (191, 191, 191)
-D_ORANGE = (204, 82, 0)
-D_GREY = (38, 38, 38)
-YELLOW = (255, 204, 0)
-GREEN = (0, 255, 0)
-MAGENTA = (203, 52, 153) #first shield
-L_YELLOW = (255, 255, 153) #second shield
-CYAN = (102, 255, 255)
-
-#circle types
-BAD = 1
-PLYR = 2
-GOOD = 3
-SPD_BOOST = 4
-COIN = 5
-SHIELD_ONE = 6
-SHIELD_TWO = 7
-NUKE = 8
-
-#directions
-NORTH = 1
-SOUTH = 2
-EAST = 3
-WEST = 4
-NE = 5
-NW = 6
-SE = 7
-SW = 8
-
-#circle timer, sets time in seconds in between new enemies
-TIMER = 2
-
-#level timer
-LEVEL_TIMER = 45
-
-#game states
-PLAYING = 0
-PAUSED = 1
-START_SCREEN = 2
-SHOP = 3
-QUIT = 4
 
 
 
+
+
+
+#pre init stuff
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 pygame.init()
 
+#audio
 pygame.mixer.pre_init(44100, 16, 2, 4096) #frequency, size, channels, buffersize
 
 pygame.mixer.init()
 
-pygame.mixer.music.load('soulstorming-space-virus.mp3')
+pygame.mixer.music.load('resources/audio/music/soulstorming-space-virus.mp3')
 pygame.mixer.music.set_volume(0.5)
-
-#display icons
-spd_img = pygame.image.load('speed_up.png')
 
 pygame.mixer.music.play(-1)
 
@@ -503,17 +511,16 @@ display_height = screen_height
 
 win.fill(BLACK)
 pygame.display.set_caption("Circles!")
-#bg = pygame.image.load("nebula.png")
 
-speed_effect = pygame.mixer.Sound("speed_up.wav")
-shrink_effect = pygame.mixer.Sound("shrink.wav")
-grow_effect = pygame.mixer.Sound("grow.wav")
-level_effect = pygame.mixer.Sound("level.wav")
-coin_effect = pygame.mixer.Sound("money.mp3")
-shield_one_effect = pygame.mixer.Sound("shield_one.wav")
-shield_two_effect = pygame.mixer.Sound("shield_two.wav")
-nuke_effect = pygame.mixer.Sound("nuke.mp3")
-new_high_score = pygame.mixer.Sound("new_high_score.mp3")
+speed_effect = pygame.mixer.Sound("resources/audio/effects/speed_up.wav")
+shrink_effect = pygame.mixer.Sound("resources/audio/effects/shrink.wav")
+grow_effect = pygame.mixer.Sound("resources/audio/effects/grow.wav")
+level_effect = pygame.mixer.Sound("resources/audio/effects/level.wav")
+coin_effect = pygame.mixer.Sound("resources/audio/effects/money.mp3")
+shield_one_effect = pygame.mixer.Sound("resources/audio/effects/shield_one.wav")
+shield_two_effect = pygame.mixer.Sound("resources/audio/effects/shield_two.wav")
+nuke_effect = pygame.mixer.Sound("resources/audio/effects/nuke.mp3")
+new_high_score = pygame.mixer.Sound("resources/audio/effects/new_high_score.mp3")
 
 
 GAME = game_def.Game(1,PLAYING,0)
@@ -521,7 +528,7 @@ PLAYER = circle_def.Player(10, 10, 10, SOUTH, 5, PLYR, 0, "")
 
 CIRCLES = []
 
-a = 12
+a = 15
 while a > 0:
     new_circle()
     a -= 1
