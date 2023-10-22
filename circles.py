@@ -474,7 +474,7 @@ def main_loop():
             if GAME.state == PAUSED:
                 pygame.mixer.music.unpause()
                 music_paused = False
-                GAME.state = PLAYING            
+                GAME.state = PLAYING                          
                 break
     while GAME.state == SHOP:
         keys = pygame.key.get_pressed()    
@@ -512,6 +512,8 @@ display_height = screen_height
 win.fill(BLACK)
 pygame.display.set_caption("Circles!")
 
+
+#all sound effects
 speed_effect = pygame.mixer.Sound("resources/audio/effects/speed_up.wav")
 shrink_effect = pygame.mixer.Sound("resources/audio/effects/shrink.wav")
 grow_effect = pygame.mixer.Sound("resources/audio/effects/grow.wav")
@@ -523,9 +525,11 @@ nuke_effect = pygame.mixer.Sound("resources/audio/effects/nuke.mp3")
 new_high_score = pygame.mixer.Sound("resources/audio/effects/new_high_score.mp3")
 
 
+#initialize game and player
 GAME = game_def.Game(1,PLAYING,0)
 PLAYER = circle_def.Player(10, 10, 10, SOUTH, 5, PLYR, 0, "")
 
+#initialize circles array
 CIRCLES = []
 
 a = 15
