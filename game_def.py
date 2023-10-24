@@ -3,6 +3,7 @@ class Game:
         self.level = level	
         self.state = state 
         self.high_score = high_score
+        self.sound = True
 							
     def change_level(self, new_level):
         self.level = new_level
@@ -13,3 +14,4 @@ class Game:
     def change_high_score(self, new_high_score):
         self.high_score = new_high_score
                     
+

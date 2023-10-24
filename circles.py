@@ -30,7 +30,7 @@ CYAN = (102, 255, 255)
 BAD = 1
 PLYR = 2
 GOOD = 3
-SPD_BOOST = 4
+SPEED = 4
 COIN = 5
 SHIELD_ONE = 6
 SHIELD_TWO = 7
@@ -59,36 +59,6 @@ START_SCREEN = 2
 SHOP = 3
 QUIT = 4
 
-
-def get_high_score():
-    # Default high score
-    high_score = 0
- 
-    # Try to read the high score from a file
-    try:
-        high_score_file = open("high_score.txt", "r")
-        GAME.high_score = int(high_score_file.read())
-        high_score_file.close()
-        print("The high score is", GAME.high_score)
-    except IOError:
-        # Error reading file, no high score
-        print("There is no high score yet.")
-    except ValueError:
-        # There's a file there, but we don't understand the number.
-        print("I'm confused. Starting with no high score.")
- 
-    return high_score
- 
- 
-def save_high_score(new_high_score):
-    try:
-        # Write the file to disk
-        high_score_file = open("high_score.txt", "w")
-        high_score_file.write(str(new_high_score))
-        high_score_file.close()
-    except IOError:
-        # Hm, can't write it.
-        print("Unable to save the high score.")
 
 def draw_player(x,y):    
     pygame.draw.circle(win, BLUE, (PLAYER.x,PLAYER.y), PLAYER.size, PLAYER.size)
@@ -138,7 +108,36 @@ def show_score():
     tRect.center = (500, 20)
     win.blit(tSurface, tRect)
     
-    
+def get_high_score():
+    # Default high score
+    high_score = 0
+
+    # Try to read the high score from a file
+    try:
+        high_score_file = open("high_score.txt", "r")
+        GAME.high_score = int(high_score_file.read())
+        high_score_file.close()
+        print("The high score is", GAME.high_score)
+    except IOError:
+        # Error reading file, no high score
+        print("There is no high score yet.")
+    except ValueError:
+        # There's a file there, but we don't understand the number.
+        print("I'm confused. Starting with no high score.")
+
+    return high_score
+
+
+def save_high_score(new_high_score):
+    try:
+        # Write the file to disk
+        high_score_file = open("high_score.txt", "w")
+        high_score_file.write(str(new_high_score))
+        high_score_file.close()
+    except IOError:
+        # Hm, can't write it.
+        print("Unable to save the high score.")
+
 def show_level():
     level_string = " Level: " + str(GAME.level)
     tSurface, tRect = text_objects(level_string, pygame.font.SysFont('Courier New', 24, bold=True), L_GREY)		
@@ -153,8 +152,20 @@ def show_pause():
     win.blit(tSurface, tRect)
     pygame.display.update()
 
+def show_level_advance():
+    advance_string = "LEVEL " + str(GAME.level)
+    tSurface, tRect = text_objects(advance_string, pygame.font.SysFont('Courier New', 60, bold=True), L_GREY)		
+    tRect.center = (display_width * 2 / 3, display_height * 2 / 3)
+    win.blit(tSurface, tRect)
+    pygame.display.update()
     
-    
+def show_store():
+    advance_string = "Welcome to the store!"
+    tSurface, tRect = text_objects(advance_string, pygame.font.SysFont('Courier New', 60, bold=True), L_GREY)		
+    tRect.center = (display_width / 2, display_height / 2)
+    win.blit(tSurface, tRect)
+    pygame.display.update()
+
 def move_circles():
     # first the player
     if PLAYER.direction == WEST:
@@ -256,22 +267,26 @@ def check_collision():
             if CIRCLES[i].alignment == GOOD:
                 PLAYER.size += CIRCLES[i].size
                 PLAYER.score += CIRCLES[i].size
-                grow_effect.play()               
+                if GAME.sound:
+                    grow_effect.play()               
                 CIRCLES.pop(i)
-            elif CIRCLES[i].alignment == SPD_BOOST:
+            elif CIRCLES[i].alignment == SPEED:
                 PLAYER.speed += 1
                 PLAYER.score += 25
                 CIRCLES.pop(i)
-                speed_effect.play()
+                if GAME.sound:
+                    speed_effect.play()
             elif CIRCLES[i].alignment == COIN:
                 PLAYER.gold += CIRCLES[i].size
                 CIRCLES.pop(i)
-                coin_effect.play()
+                if GAME.sound:
+                    coin_effect.play()
             elif CIRCLES[i].alignment == SHIELD_ONE:
                 PLAYER.shield_one += CIRCLES[i].size
                 CIRCLES.pop(i)
                 PLAYER.score += 10
-                shield_one_effect.play()
+                if GAME.sound:
+                    shield_one_effect.play()
             elif CIRCLES[i].alignment == SHIELD_TWO:
                 PLAYER.shield_two += CIRCLES[i].size
                 if PLAYER.shield_two >= 4:
@@ -279,10 +294,12 @@ def check_collision():
                     PLAYER.score += 50
                 CIRCLES.pop(i)
                 PLAYER.score += 10
-                shield_two_effect.play()
+                if GAME.sound:
+                    shield_two_effect.play()
             elif CIRCLES[i].alignment == NUKE:
                 CIRCLES.pop(i)                    
-                nuke_effect.play()
+                if GAME.sound:
+                    nuke_effect.play()
                 nuke_bad()
             elif CIRCLES[i].alignment == BAD:
                 if (PLAYER.shield_one > 0):
@@ -292,7 +309,8 @@ def check_collision():
                 else:
                     PLAYER.size -= CIRCLES[i].size
                     PLAYER.score -= CIRCLES[i].size
-                shrink_effect.play()
+                if GAME.sound:
+                    shrink_effect.play()
                 CIRCLES.pop(i)
                 if PLAYER.size < 1:
                     print("You died!")
@@ -301,9 +319,7 @@ def check_collision():
         x += 1
         i += 1
                 
-        
-        
-        
+#kill enemies around player        
 def nuke_bad():
     j = 0;
     
@@ -313,6 +329,7 @@ def nuke_bad():
             PLAYER.score += 50
         j += 1
 
+#create a new enemy/bad guy
 def new_circle(): 
     circle_type = random.randint(1,100)
     
@@ -325,13 +342,12 @@ def new_circle():
             CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
         elif (type == 8):
             CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
-        elif (type == SPD_BOOST):
-            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), SPD_BOOST, 0, "speed_up.png"))
+        elif (type == SPEED):
+            CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), random.randint(1,2), random.randint(1,8), GAME.level * random.randint(2,7), SPEED, 0, "speed_up.png"))
         else:
             CIRCLES.append(circle_def.Player(random.randint(10,800), random.randint(10,600), GAME.level * random.randint(2,15), random.randint(1,8), GAME.level * random.randint(2,7), type, 0, ""))
-        
-    
-
+            
+#draw everything but the player
 def draw_other_circles():            
     i = 0
     for obj in CIRCLES:		
@@ -339,7 +355,7 @@ def draw_other_circles():
             pygame.draw.circle(win, RED, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == GOOD:
             pygame.draw.circle(win, GREEN, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
-        elif CIRCLES[i].alignment == SPD_BOOST:
+        elif CIRCLES[i].alignment == SPEED:
             #win.blit(spd_img, (CIRCLES[i].x,CIRCLES[i].y))
             pygame.draw.circle(win, CYAN, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         elif CIRCLES[i].alignment == COIN:
@@ -352,14 +368,11 @@ def draw_other_circles():
             pygame.draw.circle(win, D_ORANGE, (CIRCLES[i].x,CIRCLES[i].y), CIRCLES[i].size, CIRCLES[i].size)
         i += 1
     
-    
-    
 def main_loop():    
     
     time = 0
     level_time = 0    
-    music_paused = False
-    #pygame.mixer.music.pause()    
+    music_paused = False      
     high_score = get_high_score()
 	    
     while GAME.state == PLAYING:                    
@@ -373,7 +386,8 @@ def main_loop():
         if PLAYER.score > GAME.high_score:
             GAME.high_score = PLAYER.score
             save_high_score(PLAYER.score)
-            new_high_score.play()
+            if GAME.sound:
+                new_high_score.play()
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_KP4] or keys[pygame.K_LEFT]:
@@ -407,10 +421,17 @@ def main_loop():
         if keys[pygame.K_m]:
             if music_paused == False:
                 pygame.mixer.music.pause()
-                music_paused = True                
+                music_paused = True 
+                mute = True               
             elif music_paused == True:
                 pygame.mixer.music.unpause()
-                music_paused = False
+                music_paused = False        
+                mute = False
+        if keys[pygame.K_s]:
+            if GAME.sound == False:
+                GAME.sound = True
+            elif GAME.sound == True:
+                GAME.sound = False
         if keys[pygame.K_F1]:
             PLAYER.speed = 5
             PLAYER.size = 10
@@ -435,6 +456,10 @@ def main_loop():
             GAME.level += 1
             PLAYER.score += 100 * GAME.level
             print ("Level up! (" + str(GAME.level) + ")")
+            show_level_advance()
+            if GAME.level == 3:
+                GAME.state == SHOP
+                show_store()
         
         if time > (TIMER * 10):
             time = 0            
@@ -458,9 +483,9 @@ def main_loop():
         event = pygame.event.poll()    
         pygame.time.delay(50)
 
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            quit()	
+        #if event.type == pygame.QUIT:
+        #    pygame.quit()
+        #    quit()	
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_p] or keys[pygame.K_SPACE]:
@@ -471,6 +496,10 @@ def main_loop():
                 break
     while GAME.state == SHOP:
         keys = pygame.key.get_pressed()    
+        show_store()
+        pygame.display.update()
+
+
     
 
 #pre init stuff
@@ -492,12 +521,9 @@ pygame.mixer.music.play(1)
 
 #initialize main window and do layout
 info = pygame.display.Info() # You have to call this before pygame.display.set_mode()
-screen_width, screen_height = info.current_w,info.current_h
+display_width, display_height = info.current_w,info.current_h
 
-win = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
-
-display_width = screen_width
-display_height = screen_height
+win = pygame.display.set_mode((display_width, display_height), pygame.FULLSCREEN)
 
 pygame.display.set_caption("Circles!")
 
